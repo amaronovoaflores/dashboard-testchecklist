@@ -1,0 +1,40 @@
+name: Actualizar datos Hunter GPS
+
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install openpyxl
+
+      - name: Ejecutar updater Hunter GPS
+        env:
+          HUNTER_USER: ${{ secrets.HUNTER_USER }}
+          HUNTER_PASS: ${{ secrets.HUNTER_PASS }}
+          GAPI_KEY: ${{ secrets.GAPI_KEY }}
+          JSONPE_TOKEN: ${{ secrets.JSONPE_TOKEN }}
+        run: python updater.py
+
+      - name: Commit y push
+        run: |
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add datos_*.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "Auto-update Hunter GPS + Mantos + SOAT $(date +'%Y-%m-%d %H:%M')"
+          git push
